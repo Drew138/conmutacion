@@ -11,7 +11,9 @@ import (
 )
 
 type Data struct {
-	Text string `json:"text"`
+	Temp string `json:"text"`
+	Led  bool   `json:"led"`
+	hi   bool   `json:"hi"`
 }
 
 var data Data
