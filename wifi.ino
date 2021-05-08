@@ -6,14 +6,14 @@ float temp = 0;
 // ---------------------Global vars------------------------------
 
 int contconexion = 0;
-const char *ssid = "Tenda_37A548";
-const char *password = "9tMasdasd";
+const char *ssid = "";
+const char *password = "";
 
 unsigned long previousMillis = 0;
 
 char host[48];
 
-String strhost = "www.asdasd.site";
+String strhost = "www.drew-graphics.site:8000";
 
 String strurl = "/write";
 
@@ -98,3 +98,6 @@ void loop()
         delay(5000);
     }
 }
+
+// https://www.bigtronica.com/8-sensores
+// https://create.arduino.cc/projecthub/pibots555/how-to-connect-dht11-sensor-with-arduino-uno-f4d239
