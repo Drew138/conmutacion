@@ -22,6 +22,7 @@ String chipid = "";
 String enviardatos(String datos)
 {
     String linea = "error";
+    WiFiClient client;
     strhost.toCharArray(host, 49);
     if (!client.connect(host, 80))
     {
@@ -57,7 +58,7 @@ String enviardatos(String datos)
 
 void setup()
 {
-    Serial.brin(115200);
+    Serial.begin(115200);
     Serial.println("");
 
     WiFi.begin(ssid, password);
@@ -91,10 +92,11 @@ void loop()
     if (currentMillis - previousMillis >= 10000)
     {
         previousMillis = currentMillis;
-        int analog = analogread(17);
+        // int analog = analogread(17);
         temp = temp + 1.0;
-        Serial.println(temp);
-        enviardatos(String(temp, 2));
+        // Serial.println(temp);
+        enviardatos("{ \"temp\": \"Hola desde arduino\" }");
+        // enviardatos(String(temp, 2));
         delay(5000);
     }
 }
