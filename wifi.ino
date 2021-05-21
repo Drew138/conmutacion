@@ -1,105 +1,86 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 float temp = 0;
 
 // ---------------------Global vars------------------------------
 
 int contconexion = 0;
-const char *ssid = "";
-const char *password = "";
+const char *ssid = "Laura";
+const char *password = "123456689";
 
-unsigned long previousMillis = 0;
+int contador = 0;
 
-char host[48];
-
-String strhost = "www.drew-graphics.site:8000";
-
-String strurl = "/write";
-
-String chipid = "";
-
-String enviardatos(String datos)
-{
-    String linea = "error";
-    WiFiClient client;
-    strhost.toCharArray(host, 49);
-    if (!client.connect(host, 80))
-    {
-        Serial.println("Fallo de conexion");
-        return linea;
-    }
-
-    client.print(String("Post ") + strurl + datos + "HTTP/1.1" + "\r\n" +
-                 "Host: " + strhost + "\r\n" + "Accept: */*" + "*\r\n" +
-                 "Content-Length: " + datos.length() + "\r\n" +
-                 "Content-Type: application/json" + "\r\n" + "\r\n" + datos);
-    delay(10);
-
-    Serial.println("Enviando Datos...");
-    unsigned long timeout = millis();
-    while (client.available() == 0)
-    {
-        if (millis() - timeout > 5000)
-        {
-            Serial.println("Cliente fuera de tiempo!");
-            client.stop();
-            return linea;
-        }
-    }
-
-    while (client.available())
-    {
-        linea = client.readStringUntil('\r');
-    }
-    Serial.println(linea);
-    return linea;
-}
+WiFiClient client;
 
 void setup()
 {
-    Serial.begin(115200);
+  Serial.begin(115200);
+  Serial.println("");
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED && contconexion < 50)
+  {
+    ++contconexion;
+    delay(500);
+    Serial.print(".");
+  }
+  if (contconexion < 50)
+  {
+    IPAddress ip(10, 162, 140, 132);
+    IPAddress gateway(10, 162, 140, 143);
+    IPAddress subnet(255, 255, 255, 255);
+    WiFi.config(ip, gateway, subnet);
+
     Serial.println("");
+    Serial.println("WiFi conectado");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println("");
+    Serial.println("Error de conexion");
+  }
+}
 
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED && contconexion < 50)
-    {
-        ++contconexion;
-        delay(500);
-        Serial.print(".");
-    }
-    if (contconexion < 50)
-    {
-        IPAddress ip(192, 168, 1, 156);      //
-        IPAddress gateway(192, 168, 1, 254); // 1?
-        IPAddress subnet(255, 255, 255, 0);
-        WiFi.config(ip, gateway, subnet);
+void sendRequest()
+{
 
-        Serial.println("");
-        Serial.println("WiFi conectado");
-        Serial.println(WiFi.localIP());
-    }
-    else
-    {
-        Serial.println("");
-        Serial.println("Error de conexion");
-    }
+  StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
+  JsonObject &JSONencoder = JSONbuffer.createObject();
+
+  JSONencoder["temp"] = String(contador);
+
+  char JSONmessageBuffer[300];
+  JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
+  //    Serial.println(JSONmessageBuffer);
+
+  HTTPClient http;                                                //Declare object of class HTTPClient
+  http.begin(client, "http://www.drew-graphics.site:8000/write"); //Specify request destination
+  http.addHeader("Content-Type", "application/json");             //Specify content-type header
+
+  int httpCode = http.POST(JSONmessageBuffer); //Send the request
+  Serial.print("xd");
+  //    String payload = http.getString();                                        //Get the response payload
+
+  //    Serial.println(httpCode);   //Print HTTP return code
+  //    Serial.println(payload);    //Print request response payload
+
+  //    http.end();  //Close connection
+
+  delay(3000);
 }
 
 void loop()
 {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= 10000)
-    {
-        previousMillis = currentMillis;
-        // int analog = analogread(17);
-        temp = temp + 1.0;
-        // Serial.println(temp);
-        enviardatos("{ \"temp\": \"Hola desde arduino\" }");
-        // enviardatos(String(temp, 2));
-        delay(5000);
-    }
-}
+  ++contador;
+  //if (WiFi.status() == WL_CONNECTED) {
+  //  for (int i = 0; i < 10 ; ++i)
+  sendRequest();
+  //  } else {
 
-// https://www.bigtronica.com/8-sensores
-// https://create.arduino.cc/projecthub/pibots555/how-to-connect-dht11-sensor-with-arduino-uno-f4d239
+  //    Serial.println("Error in WiFi connection");
+  // }
+}
