@@ -10,12 +10,12 @@ import (
 )
 
 type Data struct {
-	Temp  string `json:"temp"`
-	Light string `json:"light"`
-	R     uint8  `json:"R"`
-	G     uint8  `json:"G"`
-	B     uint8  `json:"B"`
-	// Count int    `json:"count"`
+	Temp  int   `json:"temp"`
+	Light int   `json:"light"`
+	R     uint8 `json:"R"`
+	G     uint8 `json:"G"`
+	B     uint8 `json:"B"`
+	Angle int   `json:"angle"`
 }
 
 var data Data
@@ -37,6 +37,16 @@ func setLed(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
+func setAngle(w http.ResponseWriter, r *http.Request) {
+	receivedData := Data{}
+	err := json.NewDecoder(r.Body).Decode(&receivedData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	data.Angle = receivedData.Angle
+	json.NewEncoder(w).Encode(data)
+}
+
 func writeData(w http.ResponseWriter, r *http.Request) {
 	receivedData := Data{}
 	err := json.NewDecoder(r.Body).Decode(&receivedData) // decode json in request and write it in receivedData variable attributes
@@ -54,6 +64,7 @@ func main() {
 	r.HandleFunc("/read", getData).Methods("GET") // register function handlers
 	r.HandleFunc("/write", writeData).Methods("POST")
 	r.HandleFunc("/led", setLed).Methods("POST")
+	r.HandleFunc("/angle", setAngle).Methods("POST")
 
 	srv := &http.Server{
 		Handler:      r,
@@ -64,3 +75,5 @@ func main() {
 
 	log.Fatal(srv.ListenAndServe())
 }
+
+// https://circuits4you.com/2019/01/11/nodemcu-esp8266-arduino-json-parsing-example/

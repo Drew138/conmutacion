@@ -10,8 +10,12 @@ float temp = 0;
 int contconexion = 0;
 const char *ssid = "Laura";
 const char *password = "123456689";
-
-int contador = 0;
+int R = 10;
+int G = 11;
+int B = 12;
+int TEMP = 13;
+int LIGHT = 14;
+int ANGLE = 15;
 
 WiFiClient client;
 
@@ -43,6 +47,12 @@ void setup()
     Serial.println("");
     Serial.println("Error de conexion");
   }
+  pinMode(R, OUTPUT);
+  pinMode(G, OUTPUT);
+  pinMode(B OUTPUT);
+  pinMode(ANGLE, OUTPUT);
+  pinMode(TEMP, INPUT);
+  pinMode(LIGHT, INPUT);
 }
 
 void sendRequest()
@@ -51,7 +61,8 @@ void sendRequest()
   StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
   JsonObject &JSONencoder = JSONbuffer.createObject();
 
-  JSONencoder["temp"] = String(contador);
+  JSONencoder["temp"] = analogRead(TEMP);
+  JSONencoder["light"] = analogRead(LIGHT);
 
   char JSONmessageBuffer[300];
   JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -62,11 +73,40 @@ void sendRequest()
   http.addHeader("Content-Type", "application/json");             //Specify content-type header
 
   int httpCode = http.POST(JSONmessageBuffer); //Send the request
-  Serial.print("xd");
-  //    String payload = http.getString();                                        //Get the response payload
+  String payload = http.getString();           //Get the response payload
 
-  //    Serial.println(httpCode);   //Print HTTP return code
-  //    Serial.println(payload);    //Print request response payload
+  if (httpCode == 200)
+  {
+    // Allocate JsonBuffer
+    // Use arduinojson.org/assistant to compute the capacity.
+    const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+    DynamicJsonBuffer jsonBuffer(capacity);
+
+    // Parse JSON object
+    JsonObject &root = jsonBuffer.parseObject(payload);
+    if (!root.success())
+    {
+      Serial.println(F("Parsing failed!"));
+      return;
+    }
+
+    // Decode JSON/Extract values
+    Serial.println(F("Response:"));
+    Serial.println(root["R"].as<char *>());
+    Serial.println(root["G"].as<char *>());
+    Serial.println(root["B"].as<char *>());
+    Serial.println(root["angle"].as<char *>());
+    analogWrite(R, root["R"]);
+    analogWrite(G, root["G"]);
+    analogWrite(B, root["B"]);
+    analogWrite(ANGLE, root["angle"]);
+  }
+  else
+  {
+    Serial.println("Error in response");
+  }
+  // Serial.println(httpCode); //Print HTTP return code
+  // Serial.println(payload);  //Print request response payload
 
   //    http.end();  //Close connection
 
@@ -75,9 +115,7 @@ void sendRequest()
 
 void loop()
 {
-  ++contador;
   //if (WiFi.status() == WL_CONNECTED) {
-  //  for (int i = 0; i < 10 ; ++i)
   sendRequest();
   //  } else {
 
