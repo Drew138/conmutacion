@@ -10,12 +10,10 @@ import (
 )
 
 type Data struct {
-	Temp  int   `json:"temp"`
-	Light int   `json:"light"`
-	R     uint8 `json:"R"`
-	G     uint8 `json:"G"`
-	B     uint8 `json:"B"`
-	Angle int   `json:"angle"`
+	Switch bool `json:"switch"`
+	Light  int  `json:"light"`
+	Led    bool `json:"led"`
+	Motor  bool `json:"motor"`
 }
 
 var data Data
@@ -31,19 +29,17 @@ func setLed(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	data.R = receivedData.R
-	data.G = receivedData.G
-	data.B = receivedData.B
+	data.Led = receivedData.Led
 	json.NewEncoder(w).Encode(data)
 }
 
-func setAngle(w http.ResponseWriter, r *http.Request) {
+func setMotor(w http.ResponseWriter, r *http.Request) {
 	receivedData := Data{}
 	err := json.NewDecoder(r.Body).Decode(&receivedData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	data.Angle = receivedData.Angle
+	data.Motor = receivedData.Motor
 	json.NewEncoder(w).Encode(data)
 }
 
@@ -53,8 +49,7 @@ func writeData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	data.Temp = receivedData.Temp // change data attributes to those of receivedData
-	// data.Count = receivedData.Count
+	data.Switch = receivedData.Switch // change data attributes to those of receivedData
 	data.Light = receivedData.Light
 	json.NewEncoder(w).Encode(data) // enconde json response with attributes in data
 }
@@ -64,7 +59,7 @@ func main() {
 	r.HandleFunc("/read", getData).Methods("GET") // register function handlers
 	r.HandleFunc("/write", writeData).Methods("POST")
 	r.HandleFunc("/led", setLed).Methods("POST")
-	r.HandleFunc("/angle", setAngle).Methods("POST")
+	r.HandleFunc("/angle", setMotor).Methods("POST")
 
 	srv := &http.Server{
 		Handler:      r,

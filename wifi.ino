@@ -3,24 +3,27 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-float temp = 0;
-
 // ---------------------Global vars------------------------------
 
 int contconexion = 0;
-const char *ssid = "Laura";
-const char *password = "123456689";
-int R = 10;
-int G = 11;
-int B = 12;
-int TEMP = 13;
-int LIGHT = 14;
-int ANGLE = 15;
+const char *ssid = "LA-NUBE";
+const char password = "MauMarin*1974-2021";
+
+int LED = 2;
+int SWITCH = 3;
+int LIGHT = 4;
+int MOTOR = 5;
 
 WiFiClient client;
+char JSONmessageBuffer[300];
 
 void setup()
 {
+  pinMode(LED, OUTPUT);
+  pinMode(MOTOR, OUTPUT);
+  pinMode(SWITCH, INPUT);
+  pinMode(LIGHT, INPUT);
+
   Serial.begin(115200);
   Serial.println("");
 
@@ -47,27 +50,23 @@ void setup()
     Serial.println("");
     Serial.println("Error de conexion");
   }
-  pinMode(R, OUTPUT);
-  pinMode(G, OUTPUT);
-  pinMode(B OUTPUT);
-  pinMode(ANGLE, OUTPUT);
-  pinMode(TEMP, INPUT);
-  pinMode(LIGHT, INPUT);
+}
+
+void writeJSON()
+{
+
+  StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
+  JsonObject &JSONencoder = JSONbuffer.createObject();
+  JSONencoder["switch"] = digitalRead(SWITCH);
+  JSONencoder["light"] = analogRead(LIGHT);
+  JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
 }
 
 void sendRequest()
 {
 
-  StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
-  JsonObject &JSONencoder = JSONbuffer.createObject();
-
-  JSONencoder["temp"] = analogRead(TEMP);
-  JSONencoder["light"] = analogRead(LIGHT);
-
-  char JSONmessageBuffer[300];
-  JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
   //    Serial.println(JSONmessageBuffer);
-
+  writeJSON();
   HTTPClient http;                                                //Declare object of class HTTPClient
   http.begin(client, "http://www.drew-graphics.site:8000/write"); //Specify request destination
   http.addHeader("Content-Type", "application/json");             //Specify content-type header
@@ -92,23 +91,18 @@ void sendRequest()
 
     // Decode JSON/Extract values
     Serial.println(F("Response:"));
-    Serial.println(root["R"].as<char *>());
-    Serial.println(root["G"].as<char *>());
-    Serial.println(root["B"].as<char *>());
-    Serial.println(root["angle"].as<char *>());
-    analogWrite(R, root["R"]);
-    analogWrite(G, root["G"]);
-    analogWrite(B, root["B"]);
-    analogWrite(ANGLE, root["angle"]);
+    Serial.println(root["led"].as<char *>());
+    Serial.println(root["motor"].as<char *>());
+    digitalWrite(MOTOR, root["motor"]);
+    digitalWrite(LED, root["led"]);
   }
   else
   {
     Serial.println("Error in response");
   }
-  // Serial.println(httpCode); //Print HTTP return code
-  // Serial.println(payload);  //Print request response payload
-
-  //    http.end();  //Close connection
+  Serial.println(httpCode); //Print HTTP return code
+  Serial.println(payload);  //Print request response payload
+  http.end();               //Close connection
 
   delay(3000);
 }
