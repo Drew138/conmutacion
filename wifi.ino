@@ -57,14 +57,13 @@ void writeJSON()
 
   StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
   JsonObject &JSONencoder = JSONbuffer.createObject();
-  JSONencoder["switch"] = digitalRead(SWITCH);
+  JSONencoder["switch"] = digitalRead(SWITCH) ? true : false;
   JSONencoder["light"] = analogRead(LIGHT);
   JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
 }
 
 void sendRequest()
 {
-
   //    Serial.println(JSONmessageBuffer);
   writeJSON();
   HTTPClient http;                                                //Declare object of class HTTPClient
@@ -112,7 +111,6 @@ void loop()
   //if (WiFi.status() == WL_CONNECTED) {
   sendRequest();
   //  } else {
-
   //    Serial.println("Error in WiFi connection");
   // }
 }
